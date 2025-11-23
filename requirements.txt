@@ -1,0 +1,24 @@
+# FastAPI y servidor
+fastapi>=0.115.0
+uvicorn[standard]>=0.32.0
+
+# SQLAlchemy async con PostgreSQL
+# Para Python 3.13, usando psycopg v3 que soporta async nativamente
+sqlalchemy[asyncio]>=2.0.36
+psycopg[binary]>=3.2.0
+
+# Supabase
+supabase>=2.8.0
+
+# Variables de entorno
+python-dotenv>=1.0.0
+
+# Pydantic (compatible con Python 3.13)
+# pydantic[email] incluye email-validator para validación de emails
+pydantic[email]>=2.10.0
+pydantic-core>=2.27.0
+pydantic-settings>=2.6.0
+
+# JWT y seguridad
+python-jose[cryptography]>=3.3.0
+python-multipart>=0.0.12
