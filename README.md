@@ -1,3 +1,5 @@
+# Company Service
+
 Microservicio encargado de la gestión de:
 - Sucursales
 - Almacenes
@@ -6,9 +8,10 @@ Microservicio encargado de la gestión de:
 
 Incluye autorización RBAC mediante comunicación con el Auth Service.
 
-----------------------------------------
-1. DESCRIPCIÓN GENERAL
-----------------------------------------
+---
+
+## 1. Descripción General
+
 El Company Service forma parte de un ecosistema de microservicios junto con el Auth Service.
 Su responsabilidad es administrar toda la estructura organizacional de una empresa:
 
@@ -19,13 +22,16 @@ Su responsabilidad es administrar toda la estructura organizacional de una empre
 - Consultar qué usuarios están en una sucursal
 - Consultar qué almacenes están vinculados a una sucursal y viceversa
 
-Seguridad:
+### Seguridad
+
 El acceso a cada endpoint se controla por permisos usando el Auth Service.
 Los permisos se reciben en el JWT y se evalúan antes de cada operación.
 
-----------------------------------------
-2. ARQUITECTURA Y ESTRUCTURA DEL PROYECTO
-----------------------------------------
+---
+
+## 2. Arquitectura y Estructura del Proyecto
+
+```
 company-service/
 ├── app/
 │   ├── main.py               → Inicializa FastAPI y monta routers
@@ -42,195 +48,208 @@ company-service/
 │   │   ├── sucursales.py
 │   │   └── almacenes.py
 └── requirements.txt
+```
 
-----------------------------------------
-3. BASE DE DATOS
-----------------------------------------
-Tablas esperadas:
+---
 
-SUCURSALES
-- id_sucursal (PK)
-- nombre
-- direccion
-- telefono
-- estado
-- fecha_creacion
-- empresas_id_empresa (FK)
+## 3. Base de Datos
 
-ALMACENES
-- id_almacen (PK)
-- nombre
-- descripcion
-- es_principal
-- estado
-- fecha_creacion
-- empresas_id_empresa (FK)
+### Tablas esperadas:
 
-USUARIOS_SUCURSALES
-- usuarios_id_usuario (PK, FK → usuarios.id_usuario del Auth Service)
-- sucursales_id_sucursal (PK, FK → sucursales.id_sucursal)
+#### SUCURSALES
+- `id_sucursal` (PK)
+- `nombre`
+- `direccion`
+- `telefono`
+- `estado`
+- `fecha_creacion`
+- `empresas_id_empresa` (FK)
 
-SUCURSALES_ALMACENES
-- sucursales_id_sucursal (PK)
-- almacenes_id_almacen (PK)
+#### ALMACENES
+- `id_almacen` (PK)
+- `nombre`
+- `descripcion`
+- `es_principal`
+- `estado`
+- `fecha_creacion`
+- `empresas_id_empresa` (FK)
 
-----------------------------------------
-4. AUTH SERVICE INTEGRATION (RBAC)
-----------------------------------------
+#### USUARIOS_SUCURSALES
+- `usuarios_id_usuario` (PK, FK → usuarios.id_usuario del Auth Service)
+- `sucursales_id_sucursal` (PK, FK → sucursales.id_sucursal)
+
+#### SUCURSALES_ALMACENES
+- `sucursales_id_sucursal` (PK)
+- `almacenes_id_almacen` (PK)
+
+---
+
+## 4. Auth Service Integration (RBAC)
+
 Cada request pasa por:
 
-- get_current_user()
+- **`get_current_user()`**
     → valida token del Auth Service
     → obtiene:
         - usuario
         - empresa
         - permisos
-- require_permission(accion, recurso)
+
+- **`require_permission(accion, recurso)`**
     → valida que el usuario tenga:
-        accion: "create", "read", "update", "delete"
-        recurso: nombre de tabla ("sucursales", "almacenes", etc.)
+        - `accion`: `"create"`, `"read"`, `"update"`, `"delete"`
+        - `recurso`: nombre de tabla (`"sucursales"`, `"almacenes"`, etc.)
 
-Dueños (`es_dueno=true`) tienen acceso completo.
+**Nota:** Dueños (`es_dueno=true`) tienen acceso completo.
 
-----------------------------------------
-5. ENDPOINTS DEL MICROSERVICIO
-----------------------------------------
+---
 
-========================================
-5.1 SUCURSALES (/sucursales)
-========================================
+## 5. Endpoints del Microservicio
 
-POST /sucursales  
-Permiso: create → sucursales  
-Crea una sucursal perteneciente a la empresa del usuario.
+### 5.1 Sucursales (`/sucursales`)
 
-GET /sucursales  
-Permiso: read → sucursales  
-Lista todas las sucursales de la empresa.
+#### `POST /sucursales`
+- **Permiso:** `create` → `sucursales`
+- **Descripción:** Crea una sucursal perteneciente a la empresa del usuario.
 
-GET /sucursales/{id}  
-Permiso: read → sucursales  
-Obtiene una sucursal específica.
+#### `GET /sucursales`
+- **Permiso:** `read` → `sucursales`
+- **Descripción:** Lista todas las sucursales de la empresa.
 
-PATCH /sucursales/{id}  
-Permiso: update → sucursales  
-Actualiza campos de una sucursal.
+#### `GET /sucursales/{id}`
+- **Permiso:** `read` → `sucursales`
+- **Descripción:** Obtiene una sucursal específica.
 
-DELETE /sucursales/{id}  
-Permiso: delete → sucursales  
-Soft delete: cambia estado a false.
+#### `PATCH /sucursales/{id}`
+- **Permiso:** `update` → `sucursales`
+- **Descripción:** Actualiza campos de una sucursal.
 
-----------------------------------------
-Asignación Usuario–Sucursal
-----------------------------------------
+#### `DELETE /sucursales/{id}`
+- **Permiso:** `delete` → `sucursales`
+- **Descripción:** Soft delete: cambia estado a `false`.
 
-POST /sucursales/{id}/usuarios  
-Permiso: create → usuarios_sucursales  
-Asigna un usuario a una sucursal.
+### Asignación Usuario–Sucursal
 
-GET /sucursales/{id}/usuarios  
-Permiso: read → usuarios_sucursales  
-Devuelve la lista completa de empleados asignados.
+#### `POST /sucursales/{id}/usuarios`
+- **Permiso:** `create` → `usuarios_sucursales`
+- **Descripción:** Asigna un usuario a una sucursal.
 
-DELETE /sucursales/{id}/usuarios/{usuario_id}  
-Permiso: delete → usuarios_sucursales  
-Quita un usuario de una sucursal.
+#### `GET /sucursales/{id}/usuarios`
+- **Permiso:** `read` → `usuarios_sucursales`
+- **Descripción:** Devuelve la lista completa de empleados asignados.
 
-----------------------------------------
-Listado de almacenes para una sucursal
-----------------------------------------
+#### `DELETE /sucursales/{id}/usuarios/{usuario_id}`
+- **Permiso:** `delete` → `usuarios_sucursales`
+- **Descripción:** Quita un usuario de una sucursal.
 
-GET /sucursales/{id}/almacenes  
-Permiso: read → sucursales_almacenes  
-Devuelve almacenes vinculados a esa sucursal.
+### Listado de almacenes para una sucursal
 
-========================================
-5.2 ALMACENES (/almacenes)
-========================================
+#### `GET /sucursales/{id}/almacenes`
+- **Permiso:** `read` → `sucursales_almacenes`
+- **Descripción:** Devuelve almacenes vinculados a esa sucursal.
 
-POST /almacenes  
-Permiso: create → almacenes  
-Crea un almacén y lo asigna a una sucursal.
+---
 
-GET /almacenes  
-Permiso: read → almacenes  
-Lista todos los almacenes de la empresa.
+### 5.2 Almacenes (`/almacenes`)
 
-GET /almacenes/{id}  
-Permiso: read → almacenes  
-Obtiene un almacén específico.
+#### `POST /almacenes`
+- **Permiso:** `create` → `almacenes`
+- **Descripción:** Crea un almacén y lo asigna a una sucursal.
 
-PATCH /almacenes/{id}  
-Permiso: update → almacenes  
-Actualiza un almacén.
+#### `GET /almacenes`
+- **Permiso:** `read` → `almacenes`
+- **Descripción:** Lista todos los almacenes de la empresa.
 
-DELETE /almacenes/{id}  
-Permiso: delete → almacenes  
-Soft delete: estado = false.
+#### `GET /almacenes/{id}`
+- **Permiso:** `read` → `almacenes`
+- **Descripción:** Obtiene un almacén específico.
 
-----------------------------------------
-Asignación Sucursal–Almacén
-----------------------------------------
+#### `PATCH /almacenes/{id}`
+- **Permiso:** `update` → `almacenes`
+- **Descripción:** Actualiza un almacén.
 
-POST /almacenes/{id}/sucursales  
-Permiso: create → sucursales_almacenes  
-Asigna un almacén a una sucursal.
+#### `DELETE /almacenes/{id}`
+- **Permiso:** `delete` → `almacenes`
+- **Descripción:** Soft delete: `estado = false`.
 
-GET /almacenes/{id}/sucursales  
-Permiso: read → sucursales_almacenes  
-Lista sucursales atendidas por ese almacén.
+### Asignación Sucursal–Almacén
 
-DELETE /almacenes/{id}/sucursales/{sucursal_id}  
-Permiso: delete → sucursales_almacenes  
-Elimina la asignación.
+#### `POST /almacenes/{id}/sucursales`
+- **Permiso:** `create` → `sucursales_almacenes`
+- **Descripción:** Asigna un almacén a una sucursal.
 
-----------------------------------------
-6. EJEMPLOS DE REQUESTS
-----------------------------------------
+#### `GET /almacenes/{id}/sucursales`
+- **Permiso:** `read` → `sucursales_almacenes`
+- **Descripción:** Lista sucursales atendidas por ese almacén.
 
-Crear sucursal:
+#### `DELETE /almacenes/{id}/sucursales/{sucursal_id}`
+- **Permiso:** `delete` → `sucursales_almacenes`
+- **Descripción:** Elimina la asignación.
+
+---
+
+## 6. Ejemplos de Requests
+
+### Crear sucursal
+
+```http
 POST /sucursales
+```
+
+```json
 {
   "nombre": "Sucursal Central",
   "direccion": "Av. Siempre Viva 123",
   "telefono": "78945612"
 }
+```
 
-Crear almacén asignado a sucursal:
+### Crear almacén asignado a sucursal
+
+```http
 POST /almacenes
+```
+
+```json
 {
   "nombre": "Almacén Principal",
   "descripcion": "Central",
   "es_principal": true,
   "sucursal_id": 1
 }
+```
 
-Asignar usuario a sucursal:
+### Asignar usuario a sucursal
+
+```http
 POST /sucursales/1/usuarios
+```
+
+```json
 {
   "usuarios_id_usuario": 6,
   "sucursales_id_sucursal": 1
 }
+```
 
-----------------------------------------
-7. ERRORES COMUNES
-----------------------------------------
+---
 
-• 404 Branch not found in your company  
-La sucursal no pertenece al usuario autenticado.
+## 7. Errores Comunes
 
-• 400 Sucursal does not belong to your company  
-Intento de asignar entidades entre empresas distintas.
+- **`404 Branch not found in your company`**  
+  La sucursal no pertenece al usuario autenticado.
 
-• 403 Permission denied  
-El usuario no tiene permisos suficientes.
+- **`400 Sucursal does not belong to your company`**  
+  Intento de asignar entidades entre empresas distintas.
 
-----------------------------------------
-8. NOTAS IMPORTANTES
-----------------------------------------
+- **`403 Permission denied`**  
+  El usuario no tiene permisos suficientes.
 
-• Los IDs de empresa nunca vienen del cliente → siempre del Auth Service.  
-• Dueños tienen permisos completos sin excepción.  
-• Los permisos deben declararse en el Auth Service.  
-• El servicio no gestiona usuarios → solo recibe IDs.  
+---
 
+## 8. Notas Importantes
+
+- Los IDs de empresa nunca vienen del cliente → siempre del Auth Service.
+- Dueños tienen permisos completos sin excepción.
+- Los permisos deben declararse en el Auth Service.
+- El servicio no gestiona usuarios → solo recibe IDs.
